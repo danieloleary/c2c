@@ -1,8 +1,8 @@
 # Product Requirements Document: ClawShare P2P
 
-**Version:** 2.0
+**Version:** 3.0 - GitHub-First Architecture
 **Date:** February 1, 2026
-**Status:** MVP Development - Phase 2: Shell-to-Shell Robustness
+**Status:** Development - Phase 1: GitHub OAuth + Storage
 
 ---
 
@@ -10,9 +10,9 @@
 
 **The Truth:**
 - ClawShare is NOT a file-sharing app for humans
-- It's a **shell-to-shell, claw-to-claw P2P transfer protocol**
+- GitHub is the backbone: OAuth for identity, Gist for storage
+- Files stay in users' GitHub accounts — transparent and auditable
 - The UI is scaffolding for humans—crab-to-crab transfer is the product
-- Humans are clumsy facilitators who drop files or paste codes
 
 **The Mantra:**
 > Make the crab-to-crab transfer unbreakable and invisible.  
@@ -26,78 +26,99 @@
 
 ## Overview
 
-ClawShare P2P is a peer-to-peer file transfer protocol where two devices find each other via GitHub Gist breadcrumbs, then rip files directly over WebRTC like crabs in a death grip. No servers, no logs, pure direct armored transfer.
+ClawShare P2P is a peer-to-peer file sharing platform built on GitHub. Users login with GitHub, files stored in their Gists, and share via links. GitHub handles identity, storage, and security — ClawShare provides the sharing interface.
+
+### Why GitHub?
+
+- ✅ **Real identity** — OAuth login prevents anonymous abuse
+- ✅ **Transparent storage** — Files live in user's GitHub account
+- ✅ **GitHub-grade security** — GitHub's infrastructure = your security
+- ✅ **User control** — Delete/modify files directly on GitHub
+- ✅ **Auditable** — Users can see exactly what ClawShare accesses
+
+---
+
+## Architecture
+
+```
+┌─────────────┐         ┌─────────────┐         ┌─────────────┐
+│   User A    │  GitHub  │   GitHub    │  GitHub  │   User B    │
+│  (GitHub)   │◄───────►│   Gist      │◄───────►│  (GitHub)   │
+│   OAuth     │  OAuth   │   Storage   │  OAuth   │   OAuth     │
+└─────────────┘         └─────────────┘         └─────────────┘
+```
+
+### How It Works
+
+1. **Login with GitHub** — Click "Sign in with GitHub"
+2. **Drop a file** — Stored in your private GitHub Gist
+3. **Share link** — Recipient gets read access
+4. **Download** — Recipient fetches from your Gist
+5. **You control everything** — Delete from GitHub anytime
+
+---
 
 ## Problem Statement
 
 Existing solutions:
-- **Centralized storage** — Files go through servers (privacy nightmare)
-- **Middleman touching payload** — Servers see your data
-- **Slow transfers** — Server bottleneck
-- **Complex UX** — Over engineered for simple task
+- **Centralized storage** — Files go through servers (privacy concerns)
+- **Anonymous uploads** — Abuse, malware, illegal content
+- **Black box** — Users can't see/delete their data
+- **No identity** — No accountability for uploaders
 
-## Solution
-
-ClawShare enables direct shell-to-shell transfer:
-1. **Sender** drops file → metadata to GitHub Gist
-2. **Receiver** opens link → fetches metadata
-3. **Devices** handshake via Gist breadcrumbs
-4. **WebRTC** blasts files directly (never touches servers)
-5. **Transfer complete** — crabs release grip
+### ClawShare Solution
+- **GitHub as backbone** — Real identity, transparent storage
+- **Files in user's Gist** — User controls their data
+- **GitHub-grade security** — GitHub's infrastructure
+- **Rate limiting per user** — Prevents abuse
 
 ---
 
-## Priority Order
+## User Stories
 
-### Priority Zero: Shell-to-Shell Robustness (Current Focus)
-1. ✅ Bulletproof WebRTC reconnection (auto-retry on ICE disconnect)
-2. ✅ Chunked transfer with resume (track offset, resume from last acknowledged chunk)
-3. ✅ ICE restart on failure
-4. ✅ Exponential backoff reconnect (max 5 attempts)
-5. ⏳ NAT traversal (STUN/TURN configuration)
-6. ⏳ Large-file handling (2GB+ support, no memory blowup)
-
-### Priority 1: Human Scaffolding (Minimal)
-1. ✅ Copy-to-clipboard (tiny button)
-2. ⏳ QR code for phone transfers
-3. ✅ File previews: Only sender's drop zone
-4. ⏳ Receiver minimal UI: "Incoming from claw @ [code] – [size]"
-5. ✅ Simple progress: "Claw gripping... 45% (8.2 MB/s)"
-6. ⏳ Ugly-truth rate limiting: "Your human has 4/10 free grips left today"
-
-### Kill or Defer
-- ❌ Auth / GitHub login (kills zero-friction crab magic)
-- ❌ Full transfer dashboard
-- ❌ Confetti, success fireworks
-- ❌ Fancy settings (dark mode toggle only for now)
+| As a... | I want to... | So that... |
+|---------|--------------|------------|
+| User | Login with GitHub | My identity is verified |
+| User | Drop a file | It gets stored in my Gist |
+| User | Copy share link | Send to friend/colleague |
+| Recipient | Click link and download | Get the file from sender's Gist |
+| User | See my files | Manage/delete transfers |
+| User | Revoke share link | Stop others from downloading |
+| Admin | Rate limit users | Prevent abuse |
 
 ---
 
-## Core Features (MVP)
+## Core Features
 
-### 1. File Metadata & Signaling
-- Users select a file from their device
-- File metadata uploaded to GitHub Gist
-- Shareable link generated with Gist ID
-- Gist stores: filename, size, hash, sender ID, timestamps
+### 1. Authentication (GitHub OAuth)
+- **Login** — "Sign in with GitHub" button
+- **Session** — JWT token stored in cookie
+- **User info** — Username, avatar from GitHub API
+- **Logout** — Clear session
 
-### 2. P2P Transfer (WebRTC Data Channels)
-- Recipient opens link → fetches metadata from Gist
-- WebRTC connection established directly between browsers
-- File transfers in 16KB chunks
-- Resume support: if connection drops, resume from last offset
-- Auto-reconnect: ICE failure triggers retry with backoff
-- Encrypted end-to-end (DTLS)
+### 2. File Upload
+- **Drag & drop** — Drop zone for files
+- **File select** — Click to browse
+- **Size check** — Enforce 100MB limit
+- **Store in Gist** — Private gist with metadata
+- **Rate limit** — Check user's transfer count
 
-### 3. Transfer Status
-- Simple text-first progress: "Claw gripping... 45% (8.2 MB/s)"
-- Connection state: connecting → transferring → complete
-- Fail state: "Shell lost connection – retrying claw grip..."
+### 3. Share Links
+- **Generate link** — `/s/{gistId}` format
+- **Copy button** — One-click copy
+- **QR code** — Scan to download (future)
+- **Expiry** — Configurable timeout (future)
 
-### 4. Rate Limiting (Free Tier)
-- 100MB file size limit
-- 10 transfers/day
-- Block with ugly-truth message when exceeded
+### 4. Download
+- **Fetch from Gist** — Get file content
+- **Progress** — Show download progress
+- **Save** — Browser download dialog
+
+### 5. User Dashboard (Future)
+- **List files** — Show user's Gists
+- **View details** — Filename, size, date, downloads
+- **Revoke** — Delete Gist or make private
+- **Stats** — Transfer history
 
 ---
 
@@ -106,21 +127,23 @@ ClawShare enables direct shell-to-shell transfer:
 ### Frontend
 - **Framework:** Next.js 14 (App Router)
 - **Language:** TypeScript
-- **Styling:** Tailwind CSS (minimal, dark mode default)
+- **Styling:** Tailwind CSS
+- **Auth:** NextAuth.js
 
-### Signaling
-- **GitHub Gist API** — For metadata storage and peer discovery
-- Gist description format: `clawshare:filename:fileHash`
+### Backend (Serverless)
+- **Next.js API Routes** — `/api/*`
+- **GitHub API** — Gist CRUD, user info
+- **Rate limiting** — Per-user quotas
 
-### P2P Layer
-- **WebRTC Data Channels** — Direct encrypted transfer
-- **STUN servers** — Google public STUN for NAT traversal
-- **Chunk size:** 16KB for reliable transfer
+### Storage
+- **GitHub Gist** — File storage (user's private Gists)
+- **No database** — GitHub is the source of truth
+- **No file storage** — Files stay on GitHub
 
-### No Server Storage
-- GitHub only sees metadata (filename, size, hash)
-- File content never leaves sender's device
-- Receivers fetch directly from sender via WebRTC
+### Rate Limiting
+- **Per user** — GitHub user ID as key
+- **Free tier** — 10 transfers/day
+- **Pro tier** — Unlimited (coming soon)
 
 ---
 
@@ -143,14 +166,49 @@ ClawShare enables direct shell-to-shell transfer:
 
 ---
 
+## API Endpoints
+
+### Authentication
+```
+GET  /api/auth/signin        # Sign in page
+GET  /api/auth/signout       # Sign out
+GET  /api/auth/callback/github  # OAuth callback
+GET  /api/auth/session       # Get session
+```
+
+### Files
+```
+POST /api/gist               # Create gist with file
+GET  /api/gist?id={gistId}   # Get gist content
+GET  /api/gist/list          # List user's gists
+DELETE /api/gist?id={gistId} # Delete gist
+```
+
+### Rate Limiting
+```
+GET  /api/limits             # Get user's remaining transfers
+```
+
+---
+
+## Rate Limits (Free Tier)
+
+| Limit | Value |
+|-------|-------|
+| File size | 100MB |
+| Transfers/day | 10 per GitHub user |
+| Gist storage | GitHub limits (1GB per gist) |
+
+---
+
 ## Non-Negotiables (Test These)
 
-1. ✅ Phone on cellular → laptop on WiFi transfer
-2. ⏳ Close/reopen tab mid-transfer (should resume)
-3. ⏳ Airplane mode toggle (should recover)
-4. ⏳ Measure: time-to-first-byte after code entry
-5. ⏳ Transfer time vs direct USB benchmark
-6. ⏳ Lighthouse perf > 95
+1. ✅ Login with GitHub works
+2. ✅ File uploads to user's Gist
+3. ✅ Share link creates valid download
+4. ⏳ Rate limiting enforces quotas
+5. ⏳ Mobile works on Safari/Chrome
+6. ⏳ Lighthouse perf > 90
 
 **After every change:** "Does this make shell-to-shell faster/more reliable? Or just prettier for humans?"
 
@@ -160,28 +218,39 @@ ClawShare enables direct shell-to-shell transfer:
 
 | Metric | Target |
 |--------|--------|
-| Transfer completion rate | > 95% |
-| Auto-reconnect success | > 80% |
-| Lighthouse performance | > 95 |
-| Time to first byte | < 2s |
-| Large file support (2GB+) | No memory blowup |
+| Login success rate | > 99% |
+| Upload success rate | > 98% |
+| Download success rate | > 98% |
+| Lighthouse performance | > 90 |
+| Auth errors | < 1% |
 
 ---
 
 ## Future Enhancements (Post-MVP)
 
-1. **QR Code Transfer** — Scan to connect phone ↔ laptop
-2. **TURN Server** — For symmetric NAT traversal
-3. **QR Link Sharing** — Quick transfer between devices
-4. **Local History** — Last 5-10 transfers only
-5. **Pro Tier** — Unlimited transfers, larger files
+1. **WebRTC P2P** — Direct transfer, bypass Gist download
+2. **QR Codes** — Scan to share between devices
+3. **Pro Tier** — Higher limits, custom branding
+4. **Team Accounts** — Shared Gist organization
+5. **Webhooks** — Notify on download
 
 ---
 
 ## Constraints
 
-- No auth required (zero-friction)
-- No server-side file storage
-- No analytics/tracking
-- Open source, auditable
-- No bloat features
+- ✅ GitHub OAuth required (real identity)
+- ✅ Files stored in user's Gist (transparent)
+- ✅ No server-side file storage
+- ✅ No analytics/tracking (privacy-first)
+- ✅ Open source, auditable
+- ✅ No bloat features
+
+---
+
+## Open Source
+
+**Repository:** https://github.com/danieloleary/clawshare-p2p
+
+**License:** MIT
+
+**Contributing:** PRs welcome! See CONTRIBUTING.md

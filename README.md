@@ -1,141 +1,208 @@
 # ClawShare P2P 🦞📤
 
-Peer-to-peer file sharing via GitHub + WebRTC. Fast, free, encrypted.
+**Claw to claw. Shell to shell. Direct. Encrypted. No servers touched.**
+
+A peer-to-peer file sharing platform built on GitHub. Files live in your GitHub Gist — transparent, auditable, yours.
+
+---
+
+## Core Philosophy: Crabs First, Humans Second
+
+**The Truth:**
+- This is NOT another file-sharing app
+- It's a **P2P transfer protocol** where GitHub handles identity and storage
+- Humans are clumsy facilitators who drop files or paste codes
+- The UI is scaffolding, not the star
+
+**The Mantra:**
+> Make the crab-to-crab transfer unbreakable and invisible.  
+> Make the human UI tolerable, not distracting.  
+> If a feature makes P2P slower, flakier, or more complex → delete it.
+
+---
+
+## Architecture
+
+```
+┌─────────────┐         ┌─────────────┐         ┌─────────────┐
+│   User A    │  GitHub  │   GitHub    │  GitHub  │   User B    │
+│  (GitHub)   │◄───────►│   Gist      │◄───────►│  (GitHub)   │
+│   OAuth     │  OAuth   │   Storage   │  OAuth   │   OAuth     │
+└─────────────┘         └─────────────┘         └─────────────┘
+```
+
+### How It Works
+
+1. **Login with GitHub** — Real identity, less anonymous abuse
+2. **Drop a file** — Stored in your private GitHub Gist
+3. **Share link** — Recipient gets read access
+4. **Download** — Recipient fetches from your Gist
+5. **You control everything** — Delete from GitHub anytime
+
+### What ClawShare Provides
+- **Zero-friction sharing** — Just drop and share
+- **GitHub-grade security** — GitHub's infrastructure = your security
+- **Transparent storage** — Files live in your GitHub account
+- **Rate limiting** — Per-user quotas via GitHub identity
+
+---
 
 ## Features
 
-- 🔗 **Share Links** — Generate shareable links via GitHub Gist
-- 🌐 **P2P Transfer** — Direct browser-to-browser (WebRTC)
-- 🔒 **Encrypted** — Files never touch our servers
-- 🎨 **Material Design 3** — Clean Google-inspired UI
-- 🆓 **Free Tier** — 100MB files, 10 transfers/day
+- 🔐 **GitHub OAuth Login** — Real identity, not anonymous
+- 📁 **Files in Your Gist** — Transparent, auditable, controllable
+- 🔗 **Share Links** — One-click sharing with read access
+- 🚫 **No Server Storage** — Files stay on GitHub
+- 📊 **Rate Limiting** — Per-user quotas (10 transfers/day free)
+- 🔒 **Encrypted Transfer** — GitHub HTTPS + optional P2P encryption
 
-## Quick Start
+---
 
-### 1. Setup Environment
+## Tech Stack
+
+- **Frontend:** Next.js 14, TypeScript, Tailwind CSS
+- **Auth:** GitHub OAuth (NextAuth.js)
+- **Storage:** GitHub Gist API
+- **UI:** Material Design 3 + Claw branding
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- GitHub OAuth App (see setup below)
+
+### Setup
 
 ```bash
+# Clone the repo
+git clone https://github.com/danieloleary/clawshare-p2p.git
 cd clawshare-p2p
+
+# Install dependencies
+npm install
+
+# Copy environment template
 cp .env.example .env.local
-# Add your GitHub token to .env.local
-export GITHUB_TOKEN="ghp_your_token_here"
-```
 
-### 2. Run Development Server
+# Add your GitHub OAuth credentials to .env.local:
+# GITHUB_CLIENT_ID=your_client_id
+# GITHUB_CLIENT_SECRET=your_client_secret
+# NEXTAUTH_SECRET=your_secret
+# NEXTAUTH_URL=http://localhost:3000
 
-```bash
+# Run development server
 npm run dev
 ```
 
-### 3. Deploy to Vercel
+### GitHub OAuth Setup
 
-```bash
-# Push to GitHub, then import in Vercel
-# Add GITHUB_TOKEN in Vercel dashboard
-# Deploy!
-```
+1. Go to GitHub Settings → Developer settings → OAuth Apps
+2. Create new OAuth App:
+   - **Homepage URL:** `http://localhost:3000`
+   - **Callback URL:** `http://localhost:3000/api/auth/callback/github`
+3. Copy Client ID and create Client Secret
+4. Add to `.env.local`
 
-## Architecture
+---
+
+## Project Structure
 
 ```
 clawshare-p2p/
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx              # Upload UI
-│   │   ├── layout.tsx             # Root layout
-│   │   ├── globals.css           # Material Design 3 styles
+│   │   ├── page.tsx              # Upload UI (minimal)
+│   │   ├── layout.tsx            # Root layout
+│   │   ├── globals.css           # Claw branding
 │   │   ├── api/
-│   │   │   └── gist/
-│   │   │       └── route.ts      # GitHub Gist API
-│   │   └── s/[gistId]/           # Transfer page
-│   │       ├── page.tsx
-│   │       └── ShareClient.tsx
+│   │   │   ├── auth/             # NextAuth.js endpoints
+│   │   │   └── gist/             # Gist API routes
+│   │   └── s/[gistId]/           # Transfer/download page
 │   ├── lib/
-│   │   ├── p2p.ts              # WebRTC P2P logic
-│   │   ├── github.ts            # GitHub API wrapper
-│   │   └── types.ts             # TypeScript types
-│   └── components/
-│       ├── Upload.tsx           # Upload components
-│       └── Transfer.tsx         # Transfer components
-├── skills/
-│   └── clawshare/
-│       └── SKILL.md            # OpenClaw skill
+│   │   ├── github.ts             # GitHub API client
+│   │   ├── p2p.ts                # WebRTC logic (future)
+│   │   └── types.ts              # TypeScript types
+│   └── components/               # Reusable UI components
 ├── .env.example
-├── PRD.md                       # Product requirements
-├── CLAUDE.md                    # Claude Code context
-└── tailwind.config.ts           # Design system config
+├── CLAUDE.md                     # Claude Code context
+├── PRD.md                        # Product requirements
+└── README.md                     # This file
 ```
-
-## Design System
-
-### Colors
-- **Primary:** `#E53935` (Google Red)
-- **Surface:** `#FFFFFF`
-- **On Surface:** `#1A1A1A`
-- **Error:** `#B00020`
-
-### Components
-- Material 3 buttons (filled, tonal, text)
-- Elevated cards (12px radius)
-- FAB for primary actions
-- Bottom navigation
-
-## How It Works
-
-### Upload Flow
-1. User selects file → file metadata uploaded to GitHub Gist
-2. Gist ID returned → shareable link generated
-3. Link includes Gist ID for recipient
-
-### Transfer Flow
-1. Recipient opens link → fetches metadata from Gist
-2. WebRTC P2P connection establishes
-3. File transfers directly between browsers
-4. Encrypted end-to-end
-
-### GitHub Integration
-- **Gist** — Stores file metadata (free, unlimited)
-- **OAuth** — User identification (future)
-- **No file content** — Only metadata, never file data
-
-## Commands
-
-```bash
-npm run dev      # Development server
-npm run build    # Production build
-npm start        # Start production server
-npm run lint     # Lint code
-```
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `GITHUB_TOKEN` | GitHub personal access token (scopes: gist) |
-| `GITHUB_CLIENT_ID` | GitHub OAuth app client ID (future) |
-| `GITHUB_CLIENT_SECRET` | GitHub OAuth app secret (future) |
-| `CLAWSHARE_URL` | Base URL for share links |
-
-## Freemium Model
-
-| Tier | Files | Transfers | Price |
-|------|-------|-----------|-------|
-| Free | 100MB | 10/day | $0 |
-| Pro | 1GB | Unlimited | $5/mo |
-| Team | 5GB | Unlimited | $15/mo |
-
-## Tech Stack
-
-- **Frontend:** Next.js 14, TypeScript, Tailwind CSS
-- **Backend:** Next.js API Routes (serverless)
-- **Storage:** GitHub Gist (metadata only)
-- **P2P:** WebRTC Data Channels
-- **Design:** Material Design 3
-
-## License
-
-MIT
 
 ---
 
-Built for clawshare.xyz 🚀
+## Usage
+
+### For Users
+
+1. **Login with GitHub** — Click "Sign in with GitHub"
+2. **Drop a file** — Select file up to 100MB
+3. **Share the link** — Copy and send to recipient
+4. **Recipient downloads** — Opens link, downloads from your Gist
+
+### For Developers
+
+```bash
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+# Lint code
+npm run lint
+```
+
+---
+
+## Rate Limits (Free Tier)
+
+| Limit | Value |
+|-------|-------|
+| File size | 100MB |
+| Transfers/day | 10 |
+| Gist storage | GitHub limits |
+
+Upgrade to Pro for higher limits (coming soon).
+
+---
+
+## Non-Negotiables (Test These)
+
+1. ✅ Login with GitHub works
+2. ✅ File uploads to user's Gist
+3. ✅ Share link creates valid download
+4. ⏳ Rate limiting enforces quotas
+5. ⏳ Mobile works on Safari/Chrome
+6. ⏳ Lighthouse perf > 90
+
+**After every change:** "Does this make shell-to-shell faster/more reliable? Or just prettier for humans?"
+
+---
+
+## Contributing
+
+1. Fork the repo
+2. Create feature branch (`git checkout -b feature/amazing`)
+3. Commit changes (`git commit -m "Add amazing feature"`)
+4. Push to branch (`git push origin feature/amazing`)
+5. Open Pull Request
+
+---
+
+## License
+
+MIT — See LICENSE file.
+
+---
+
+## Tagline
+
+> "Claw to claw. Shell to shell. Direct. Encrypted. No servers touched."
+
+Built with ❤️ by [@danieloleary](https://github.com/danieloleary)

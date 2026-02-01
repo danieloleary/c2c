@@ -86,13 +86,13 @@
   }
   
   .drop-zone:hover {
-    @apply border-claw-primary bg-white;
+    @apply border-[#FF3D00] bg-white;
     border-color: var(--claw-primary);
     box-shadow: 0 0 0 4px rgba(255, 61, 0, 0.1);
   }
   
   .drop-zone.drag-over {
-    @apply border-claw-primary scale-[1.02];
+    @apply border-[#FF3D00] scale-[1.02];
     border-color: var(--claw-primary);
     background: white;
     box-shadow: 0 0 0 8px rgba(255, 61, 0, 0.15);

@@ -1,79 +1,62 @@
-# C2C P2P 🦞📤
+# C2C (Claw to Claw) 🦞
 
-**Claw to claw. Shell to shell. Direct. Encrypted. No servers touched.**
+**Strike First. Strike Hard. No Mercy.**
 
-A peer-to-peer file sharing platform built on GitHub. Files live in your GitHub Gist — transparent, auditable, yours.
+Gist-based file sharing built for claws. Your files. Your GitHub. Your rules.
 
 ---
 
-## Core Philosophy: Crabs First, Humans Second
+## Philosophy: Crabs First, Humans Second
 
-**The Truth:**
-- This is NOT another file-sharing app
-- It's a **P2P transfer protocol** where GitHub handles identity and storage
-- Humans are clumsy facilitators who drop files or paste codes
-- The UI is scaffolding, not the star
+**Gist-to-Gist via Claws.** Files live in YOUR GitHub Gist. We never touch them.
 
 **The Mantra:**
-> Make the crab-to-crab transfer unbreakable and invisible.  
-> Make the human UI tolerable, not distracting.  
-> If a feature makes P2P slower, flakier, or more complex → delete it.
+> Strike first. Strike hard. No mercy.  
+> Files live in YOUR GitHub Gist.  
+> We never touch your data.  
+> GitHub is your storage. GitHub is your security.
 
 ---
 
-## Architecture
+## Cobra Kai Rules
+
+1. **Your GitHub, Your Files** — Files stored in your private Gist
+2. **No Central Server** — No tracking. No middleman. Your data stays in YOUR GitHub.
+3. **GitHub Security** — GitHub-grade infrastructure = your security
+4. **Honor** — Open source. Auditable. Transparent.
+5. **Mercy** — Free tier. 100MB files. 10 transfers/day.
+
+---
+
+## How It Works
 
 ```
 ┌─────────────┐         ┌─────────────┐         ┌─────────────┐
-│   User A    │  GitHub  │   GitHub    │  GitHub  │   User B    │
-│  (GitHub)   │◄───────►│   Gist      │◄───────►│  (GitHub)   │
-│   OAuth     │  OAuth   │   Storage   │  OAuth   │   OAuth     │
+│   Claw A    │ ──────► │   GitHub    │ ──────► │   Claw B    │
+│  (GitHub)   │         │    Gist     │         │  (GitHub)   │
 └─────────────┘         └─────────────┘         └─────────────┘
 ```
 
-### How It Works
+1. **Login with GitHub** — Real identity, no anonymous cowards
+2. **Drop a file** — Stored in YOUR private GitHub Gist
+3. **Share the link** — Recipient downloads from YOUR Gist
+4. **Complete** — Files never touch our servers. Ever.
 
-1. **Login with GitHub** — Real identity, less anonymous abuse
-2. **Drop a file** — Stored in your private GitHub Gist
-3. **Share link** — Recipient gets read access
-4. **Download** — Recipient fetches from your Gist
-5. **You control everything** — Delete from GitHub anytime
-
-### What C2C Provides
-- **Zero-friction sharing** — Just drop and share
-- **GitHub-grade security** — GitHub's infrastructure = your security
-- **Transparent storage** — Files live in your GitHub account
-- **Rate limiting** — Per-user quotas via GitHub identity
+**Honest architecture:** Gist-to-Gist via Claws. GitHub handles storage. We just provide the grip.
 
 ---
 
 ## Features
 
-- 🔐 **GitHub OAuth Login** — Real identity, not anonymous
-- 📁 **Files in Your Gist** — Transparent, auditable, controllable
-- 🔗 **Share Links** — One-click sharing with read access
-- 🚫 **No Server Storage** — Files stay on GitHub
-- 📊 **Rate Limiting** — Per-user quotas (10 transfers/day free)
-- 🔒 **Encrypted Transfer** — GitHub HTTPS + optional P2P encryption
+- 🥋 **Strike First** — Instant upload, instant share
+- 🦞 **Claw Grip** — Your files, your GitHub, your control
+- 🔒 **GitHub Security** — Your infrastructure, your rules
+- ⚡ **No Middleman** — Files stay in your GitHub
+- 💪 **Free Tier** — 100MB files, 10 transfers/day
 
 ---
 
-## Tech Stack
-
-- **Frontend:** Next.js 14, TypeScript, Tailwind CSS
-- **Auth:** GitHub OAuth (NextAuth.js)
-- **Storage:** GitHub Gist API
-- **UI:** Material Design 3 + Claw branding
-
----
-
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- GitHub OAuth App (see setup below)
-
-### Setup
+## Get Started
 
 ```bash
 # Clone the repo
@@ -83,80 +66,20 @@ cd c2c
 # Install dependencies
 npm install
 
-# Copy environment template
-cp .env.example .env.local
-
-# Add your GitHub OAuth credentials to .env.local:
-# GITHUB_CLIENT_ID=your_client_id
-# GITHUB_CLIENT_SECRET=your_client_secret
-# NEXTAUTH_SECRET=your_secret
-# NEXTAUTH_URL=http://localhost:3000
-
-# Run development server
+# Run locally
 npm run dev
 ```
 
-### GitHub OAuth Setup
-
-1. Go to GitHub Settings → Developer settings → OAuth Apps
-2. Create new OAuth App:
-   - **Homepage URL:** `http://localhost:3000`
-   - **Callback URL:** `http://localhost:3000/api/auth/callback/github`
-3. Copy Client ID and create Client Secret
-4. Add to `.env.local`
+Or just go to **https://c2c-woad.vercel.app** and start gripping.
 
 ---
 
-## Project Structure
+## Tech Stack
 
-```
-c2c/
-├── src/
-│   ├── app/
-│   │   ├── page.tsx              # Upload UI (minimal)
-│   │   ├── layout.tsx            # Root layout
-│   │   ├── globals.css           # Claw branding
-│   │   ├── api/
-│   │   │   ├── auth/             # NextAuth.js endpoints
-│   │   │   └── gist/             # Gist API routes
-│   │   └── s/[gistId]/           # Transfer/download page
-│   ├── lib/
-│   │   ├── github.ts             # GitHub API client
-│   │   ├── p2p.ts                # WebRTC logic (future)
-│   │   └── types.ts              # TypeScript types
-│   └── components/               # Reusable UI components
-├── .env.example
-├── CLAUDE.md                     # Claude Code context
-├── PRD.md                        # Product requirements
-└── README.md                     # This file
-```
-
----
-
-## Usage
-
-### For Users
-
-1. **Login with GitHub** — Click "Sign in with GitHub"
-2. **Drop a file** — Select file up to 100MB
-3. **Share the link** — Copy and send to recipient
-4. **Recipient downloads** — Opens link, downloads from your Gist
-
-### For Developers
-
-```bash
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
-
-# Lint code
-npm run lint
-```
+- **Frontend:** Next.js 14, TypeScript, Tailwind CSS
+- **Auth:** GitHub OAuth
+- **Storage:** GitHub Gist API
+- **Deployment:** Vercel
 
 ---
 
@@ -168,41 +91,30 @@ npm run lint
 | Transfers/day | 10 |
 | Gist storage | GitHub limits |
 
-Upgrade to Pro for higher limits (coming soon).
-
----
-
-## Non-Negotiables (Test These)
-
-1. ✅ Login with GitHub works
-2. ✅ File uploads to user's Gist
-3. ✅ Share link creates valid download
-4. ⏳ Rate limiting enforces quotas
-5. ⏳ Mobile works on Safari/Chrome
-6. ⏳ Lighthouse perf > 90
-
-**After every change:** "Does this make shell-to-shell faster/more reliable? Or just prettier for humans?"
-
 ---
 
 ## Contributing
 
 1. Fork the repo
-2. Create feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m "Add amazing feature"`)
-4. Push to branch (`git push origin feature/amazing`)
-5. Open Pull Request
+2. Create your feature branch (`git checkout -b feature/amazing`)
+3. Commit your changes (`git commit -m 'Strike hard'`)
+4. Push to the branch (`git push origin feature/amazing`)
+5. Open a Pull Request
 
 ---
 
-## License
+## Remember
 
-MIT — See LICENSE file.
+> "Files in your GitHub. Never our servers. That's the C2C way."
+
+— Daniel
 
 ---
 
-## Tagline
-
-> "Claw to claw. Shell to shell. Direct. Encrypted. No servers touched."
+**C2C (Claw to Claw)**  
+*Strike First. Strike Hard. No Mercy.*
 
 Built with ❤️ by [@danieloleary](https://github.com/danieloleary)
+
+**Repo:** https://github.com/danieloleary/c2c  
+**Live:** https://c2c-woad.vercel.app

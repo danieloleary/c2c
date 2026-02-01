@@ -1,7 +1,18 @@
-// ClawShare P2P - Robust WebRTC Implementation
-// crabs first, humans second
+// C2C WebRTC (Saved for Future P2P Enhancement)
+// Current C2C is GIST-BASED, not P2P.
+//
+// Files stored in GitHub Gist, not transferred peer-to-peer.
+//
+// This WebRTC code is saved for potential future real P2P feature.
+// When both users are online simultaneously, could add:
+// - WebRTC Data Channel for direct transfer
+// - Skip GitHub Gist for file content
+// - True peer-to-peer sharing
+//
+// Current implementation: Gist-to-Gist via Claws
+// Files never leave user's GitHub account
 
-import type { TransferProgress, WebRTCSignal } from "./types";
+import type { TransferProgress } from "./types";
 
 type MessageHandler = (data: Uint8Array, offset: number) => void;
 type StatusHandler = (status: TransferProgress) => void;

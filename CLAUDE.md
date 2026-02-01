@@ -1,265 +1,110 @@
-# CLAUDE.md - C2C P2P
+# CLAUDE.md - C2C (Claw to Claw)
 
-This file provides guidance for Claude Code when working with this codebase.
+This file provides guidance for Claude Code when working with C2C.
 
 ## Project Overview
 
-**C2C P2P** is a peer-to-peer file sharing platform built on GitHub. Files live in users' GitHub Gists — transparent, auditable, controllable. GitHub handles identity and storage; C2C provides the sharing interface.
+**C2C = Gist-to-Gist via Claws**
 
-### Core Philosophy: Crabs First, Humans Second
+A file sharing platform where:
+- Files live in YOUR GitHub Gist
+- We never touch your data
+- GitHub handles storage and security
+- C2C provides the sharing interface
 
-**The Truth:**
-- This is NOT another file-sharing app
-- GitHub is the backbone: OAuth for identity, Gist for storage
-- Files stay in users' GitHub accounts — transparent and auditable
-- The UI is scaffolding for humans—crab-to-crab transfer is the product
-
-**The Mantra:**
-> Make the crab-to-crab transfer unbreakable and invisible.  
-> Make the human UI tolerable, not distracting.  
-> If a feature makes P2P slower, flakier, or more complex → delete it.
-
-### Visual Vibe
-- 🦀 or 🦞 emoji sparingly but deliberately
-- Claw-red (#FF3D00) accents on key actions
-- Dark mode default (shells are dark)
-- Mobile-first (most transfers: phone ↔ laptop)
-
-### Tagline
-> "Claw to claw. Shell to shell. Direct. Encrypted. No servers touched."
-
----
-
-## Architecture
-
+**Honest architecture:**
 ```
-┌─────────────┐         ┌─────────────┐         ┌─────────────┐
-│   User A    │  GitHub  │   GitHub    │  GitHub  │   User B    │
-│  (GitHub)   │◄───────►│   Gist      │◄───────►│  (GitHub)   │
-│   OAuth     │  OAuth   │   Storage   │  OAuth   │   OAuth     │
-└─────────────┘         └─────────────┘         └─────────────┘
+You → Your GitHub Gist → Recipient
 ```
 
-### How It Works
-
-1. **Login with GitHub** — Real identity, less anonymous abuse
-2. **Drop a file** — Stored in user's private GitHub Gist
-3. **Share link** — Recipient gets read access
-4. **Download** — Recipient fetches from sender's Gist
-5. **User controls everything** — Delete from GitHub anytime
-
----
+No P2P. No WebRTC. Files stay in YOUR GitHub.
 
 ## Tech Stack
 
-- **Framework:** Next.js 14 (App Router)
+- **Frontend:** Next.js 14 (App Router)
 - **Language:** TypeScript
-- **Styling:** Tailwind CSS
-- **Auth:** NextAuth.js (GitHub OAuth)
-- **Storage:** GitHub Gist API
-- **Design:** Material Design 3 + Claw branding
-
----
+- **Styling:** Tailwind CSS (Cobra Kai red/black theme)
+- **Auth:** GitHub OAuth
+- **Storage:** GitHub Gist API (no database)
+- **Deployment:** Vercel
 
 ## Design System
 
 ### Colors
 ```css
---claw-primary: #FF3D00;  /* Claw Red */
---claw-dark: #1A1A1A;
---claw-surface: #FFFFFF;
+--claw-primary: #E53935;  /* Red */
+--claw-dark: #0A0A0A;    /* Black */
+--claw-surface: #121212;
 ```
 
 ### Typography
 - **Font:** Inter (body), Fredoka (headings/logo)
-- **Scale:** Material 3 type scale
-
----
 
 ## Code Patterns
 
-### NextAuth.js GitHub Login
+### GitHub Gist Upload
 ```typescript
-// src/app/api/auth/[...nextauth]/route.ts
-import NextAuth from "next-auth"
-import GithubProvider from "next-auth/providers/github"
-
-const handler = NextAuth({
-  providers: [
-    GithubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    }),
-  ],
-  callbacks: {
-    async session({ session, token }) {
-      // Add GitHub username to session
-      session.user.name = token.sub;
-      return session;
-    }
-  }
-})
-```
-
-### GitHub Gist Integration
-```typescript
-// Create gist for user's file
 const gist = await fetch('https://api.github.com/gists', {
   method: 'POST',
   headers: {
     Authorization: `Bearer ${token}`,
-    Accept: 'application/vnd.github.v3+json',
   },
   body: JSON.stringify({
-    description: 'clawshare:filename:userId',
+    description: 'c2c:filename',
     public: false,
-    files: {
-      [filename]: {
-        content: fileContent  // Base64 encoded
-      }
-    }
+    files: { filename: { content: base64Data } }
   })
 });
 ```
 
-### Fetch User's Gists
+### GitHub Gist Download
 ```typescript
-// List user's Gists for dashboard
-const response = await fetch('https://api.github.com/gists', {
-  headers: {
-    Authorization: `Bearer ${token}`,
-  }
+const gist = await fetch(`https://api.github.com/gists/${gistId}`, {
+  headers: { Authorization: `Bearer ${token}` }
 });
 ```
-
----
 
 ## File Structure
 
 ```
-c2c/
-├── src/
-│   ├── app/
-│   │   ├── page.tsx              # Upload UI (minimal)
-│   │   ├── layout.tsx            # Root layout
-│   │   ├── globals.css           # Claw branding
-│   │   ├── api/
-│   │   │   ├── auth/             # NextAuth.js endpoints
-│   │   │   │   └── [...nextauth]/
-│   │   │   └── gist/             # Gist API routes
-│   │   │       ├── route.ts      # Create/fetch Gists
-│   │   │       └── user/         # User's files
-│   │   ├── dashboard/            # User dashboard (future)
-│   │   └── s/[gistId]/
-│   │       ├── page.tsx          # Transfer page
-│   │       └── DownloadClient.tsx
-│   ├── lib/
-│   │   ├── github.ts             # GitHub API wrapper
-│   │   ├── auth.ts               # NextAuth config
-│   │   ├── p2p.ts                # WebRTC logic (future)
-│   │   └── types.ts              # TypeScript types
-│   └── components/               # Reusable components
-├── .env.example
-├── CLAUDE.md
-├── PRD.md
-└── README.md
+src/
+├── app/
+│   ├── page.tsx              # Upload UI
+│   ├── api/gist/route.ts    # Gist API routes
+│   └── s/[gistId]/         # Download page
+├── lib/
+│   ├── github.ts           # GitHub API client
+│   └── types.ts           # TypeScript types
+└── components/           # UI components
 ```
 
----
+## Key Points
 
-## Priority Order
-
-### Priority 1: GitHub OAuth + User Identity (Current)
-1. ✅ NextAuth.js GitHub provider setup
-2. ⏳ Session management
-3. ⏳ User dashboard (list user's Gists)
-4. ⏳ Rate limiting per GitHub user
-
-### Priority 2: File Sharing
-1. ✅ Upload to user's Gist
-2. ✅ Generate shareable link
-3. ⏳ Download from Gist (receiver)
-4. ⏳ Revoke/expire share links
-
-### Priority 3: Shell-to-Shell (Future)
-1. ⏳ WebRTC for direct transfer (bypass Gist download)
-2. ⏳ Fallback to Gist if WebRTC fails
-
----
-
-## Rate Limits (Free Tier)
-
-| Limit | Value |
-|-------|-------|
-| File size | 100MB |
-| Transfers/day | 10 per GitHub user |
-| Gist storage | GitHub limits |
-
-Pro tier coming soon for higher limits.
-
----
-
-## Non-Negotiables (Test These)
-
-1. ✅ Login with GitHub works
-2. ✅ File uploads to user's Gist
-3. ✅ Share link creates valid download
-4. ⏳ Rate limiting enforces quotas
-5. ⏳ Mobile works on Safari/Chrome
-6. ⏳ Lighthouse perf > 90
-
-**After every change:** "Does this make shell-to-shell faster/more reliable? Or just prettier for humans?"
-
----
-
-## Ralph Wiggum Loop
-
-Iterate until:
-1. [ ] GitHub OAuth login works
-2. [ ] File uploads to user's private Gist
-3. [ ] Share link downloads from Gist
-4. [ ] User can see their files (dashboard)
-5. [ ] Rate limiting works per user
-
----
+- No P2P/WebRTC
+- No server-side file storage
+- GitHub Gist is the only storage
+- Rate limited by GitHub user
+- Files stay in user's account
 
 ## Commands
 
 ```bash
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
+npm run dev    # Local development
+npm run build # Production build
+npm run start # Production server
 ```
 
-## Environment Variables
+## Environment
 
-Required in `.env.local`:
 ```bash
-# GitHub OAuth (required)
-GITHUB_CLIENT_ID=your_client_id
-GITHUB_CLIENT_SECRET=your_client_secret
-
-# NextAuth (required)
-NEXTAUTH_SECRET=generate_with_openssl
-NEXTAUTH_URL=http://localhost:3000
-
-# Optional: Analytics, etc.
+GITHUB_TOKEN=ghp_...
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
 ```
-
----
 
 ## Notes
 
-- GitHub OAuth = real identity, less abuse
-- Files stored in user's Gist = transparent
-- No server-side storage = GitHub handles everything
-- Rate limiting per user via GitHub identity
-- This is crabs-first, humans-second
+- This is Gist-to-Gist via Claws
+- No real P2P transfer
+- GitHub handles everything
+- User controls their data

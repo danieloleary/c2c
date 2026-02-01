@@ -11,6 +11,7 @@ interface FileInfo {
 export default function Home() {
   const [file, setFile] = useState<FileInfo | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +36,7 @@ export default function Home() {
       size: selectedFile.size,
       type: selectedFile.type,
     });
+    setUploadProgress(0);
     setError(null);
     setShareUrl(null);
   }, []);
@@ -49,6 +51,7 @@ export default function Home() {
     if (!file) return;
     
     setUploading(true);
+    setUploadProgress(0);
     setError(null);
     
     try {
@@ -77,26 +80,42 @@ export default function Home() {
           }
         };
         
+        console.log("Uploading to Gist...");
+        setUploadProgress(10);
+        
         const response = await fetch('/api/gist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(gistData)
         });
         
+        const data = await response.json();
+        console.log("Gist response:", data);
+        setUploadProgress(80);
+        
         if (!response.ok) {
-          throw new Error("Failed to upload");
+          throw new Error(data.error || "Failed to upload");
         }
         
-        const { gistId } = await response.json();
-        const url = `${window.location.origin}/s/${gistId}`;
+        const url = `${window.location.origin}/s/${data.gistId}`;
+        console.log("Share URL:", url);
         setShareUrl(url);
+        setUploadProgress(100);
+        setUploading(false);
+      };
+      
+      reader.onerror = () => {
+        setError("Failed to read file");
+        setUploading(false);
+        setUploadProgress(0);
       };
       
       reader.readAsDataURL(fileToUpload);
     } catch (err: any) {
+      console.error("Upload error:", err);
       setError(err.message || "Upload failed");
-    } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -179,7 +198,20 @@ export default function Home() {
           )}
         </div>
 
-        {/* Error Message */}
+        {/* Upload Progress */}
+        {uploading && uploadProgress > 0 && uploadProgress < 100 && (
+          <div className="mb-4 animate-slide-up">
+            <div className="progress-bar">
+              <div
+                className="progress-bar-fill"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+            <p className="text-label text-on-surface-variant mt-1 text-center">
+              Uploading... {uploadProgress}%
+            </p>
+          </div>
+        )}
         {error && (
           <div className="mb-4 p-4 bg-red-50 rounded-card text-red-700 text-body">
             <span className="material-symbols-rounded mr-2">error</span>
@@ -237,7 +269,7 @@ export default function Home() {
             </button>
             
             <button
-              onClick={() => { setFile(null); setShareUrl(null); }}
+              onClick={() => { setFile(null); setShareUrl(null); setUploadProgress(0); }}
               className="btn btn-text w-full"
             >
               Share Another File

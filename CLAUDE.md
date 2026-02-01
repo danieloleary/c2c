@@ -4,135 +4,181 @@ This file provides guidance for Claude Code when working with this codebase.
 
 ## Project Overview
 
-ClawShare P2P is a peer-to-peer file sharing platform using GitHub as the signaling layer and WebRTC for direct browser-to-browser transfers.
+**ClawShare P2P** is a shell-to-shell, claw-to-claw peer-to-peer file transfer protocol. The UI is scaffolding for humans—crab-to-crab transfer is the product.
+
+### Core Philosophy: Crabs First, Humans Second
+
+**The Truth:**
+- This is NOT a file-sharing app for humans
+- It's a **P2P transfer protocol** where devices find each other via GitHub Gist breadcrumbs
+- Humans are clumsy facilitators who drop files or paste codes
+- The UI is scaffolding, not the star
+
+**The Mantra:**
+> Make the crab-to-crab transfer unbreakable and invisible.  
+> Make the human UI tolerable, not distracting.  
+> If a feature makes P2P slower, flakier, or more complex → delete it.
+
+### Visual Vibe
+- 🦀 or 🦞 emoji sparingly but deliberately
+- Claw-red (#FF3D00) accents on key actions
+- Dark mode default (shells are dark)
+- Mobile-first (most transfers: phone ↔ laptop)
+
+### Tagline
+> "Claw to claw. Shell to shell. Direct. Encrypted. No servers touched."
+
+---
 
 ## Tech Stack
 
 - **Framework:** Next.js 14 (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS with Material Design 3
-- **Backend:** Next.js API Routes
-- **Storage:** GitHub Gist (metadata only)
-- **P2P:** WebRTC (future), GitHub Gist (MVP signaling)
+- **Signaling:** GitHub Gist API (metadata only)
+- **P2P:** WebRTC Data Channels (chunked transfer)
+- **No file content** stored anywhere—direct browser-to-browser
 
 ## Design System
 
 ### Colors
 ```css
---md-sys-color-primary: #e53935;  /* Google Red */
---md-sys-color-surface: #ffffff;
---md-sys-color-on-surface: #1a1a1a;
---md-sys-color-error: #b00020;
+--claw-primary: #FF3D00;  /* Claw Red */
+--claw-dark: #1A1A1A;
+--claw-surface: #FFFFFF;
 ```
 
 ### Typography
-- Font: Inter (Google Sans alternative)
-- Scale: Material 3 type scale
+- **Font:** Inter (body), Fredoka (headings/logo)
+- **Scale:** Material 3 type scale
 
-### Key Components
-- Buttons: `.btn` with `.btn-filled`, `.btn-tonal`, `.btn-text` variants
-- Cards: `.card` with 12px border radius
-- FAB: `.fab` for primary actions
-- Drop zone: `.drop-zone` with drag-and-drop
+---
 
 ## Code Patterns
 
 ### Tailwind Classes
 ```tsx
 // Buttons
-<button className="btn btn-filled">Text</button>
-<button className="btn btn-tonal">Text</button>
-<button className="btn btn-text">Text</button>
+<button className="btn-filled">Action</button>
+<button className="btn-tonal">Secondary</button>
+<button className="btn-text">Tertiary</button>
 
 // Cards
 <div className="card">Content</div>
 
 // Typography
-<h1 className="text-headline">Title</h1>
+<h1 className="text-hero">Title</h1>
 <p className="text-body">Body</p>
 <span className="text-label">Label</span>
-
-// Icons (Material Symbols)
-<span className="material-symbols-rounded">icon_name</span>
 ```
 
-### API Routes
+### GitHub Gist Integration
 ```typescript
-// src/app/api/[route]/route.ts
-export async function POST(request: NextRequest) {
-  // Handle POST requests
-}
-export async function GET(request: NextRequest) {
-  // Handle GET requests
-}
-```
-
-## File Structure
-
-```
-src/
-├── app/
-│   ├── page.tsx              # Upload page
-│   ├── layout.tsx            # Root layout
-│   ├── globals.css           # Material 3 styles
-│   ├── api/
-│   │   └── gist/
-│   │       └── route.ts      # GitHub Gist API
-│   └── s/[gistId]/
-│       ├── page.tsx          # Transfer page
-│       └── ShareClient.tsx   # Transfer UI components
-├── components/               # Reusable components
-.env.example                 # Environment template
-PRD.md                       # Product requirements
-README.md                    # Documentation
-tailwind.config.ts           # Design system config
-```
-
-## GitHub Integration
-
-### Creating a Gist
-```typescript
-const response = await fetch('https://api.github.com/gists', {
+// Create gist for signaling
+const gist = await fetch('https://api.github.com/gists', {
   method: 'POST',
-  headers: {
-    Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-    Accept: 'application/vnd.github.v3+json',
-  },
   body: JSON.stringify({
-    description: 'clawshare:filename',
+    description: 'clawshare:filename:hash',
     public: false,
-    files: { 'filename.ext': { content: 'base64...' } }
+    files: { 'metadata.json': { content: JSON.stringify(data) } }
   })
 });
 ```
 
-### Fetching a Gist
+### WebRTC Data Channel (Chunked Transfer)
 ```typescript
-const response = await fetch(`https://api.github.com/gists/${gistId}`, {
-  headers: {
-    Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-  }
-});
+// Sender: chunk and send
+const CHUNK_SIZE = 16 * 1024; // 16KB
+for (let offset = 0; offset < fileSize; offset += CHUNK_SIZE) {
+  const chunk = file.slice(offset, offset + CHUNK_SIZE);
+  await dataChannel.send(chunk);
+}
+
+// Receiver: accumulate chunks
+dataChannel.onmessage = (event) => {
+  receivedChunks.push(event.data);
+  if (receivedSize >= totalSize) assembleFile();
+};
 ```
+
+---
+
+## File Structure
+
+```
+clawshare-p2p/
+├── src/
+│   ├── app/
+│   │   ├── page.tsx              # Upload UI (minimal)
+│   │   ├── layout.tsx            # Root layout
+│   │   ├── globals.css           # Claw branding
+│   │   ├── api/
+│   │   │   └── gist/
+│   │   │       └── route.ts      # Gist API
+│   │   └── s/[gistId]/
+│   │       ├── page.tsx          # Transfer page (minimal)
+│   │       └── ShareClient.tsx   # Receiver UI
+│   ├── lib/
+│   │   ├── p2p.ts              # WebRTC logic (PRIORITY)
+│   │   ├── github.ts           # GitHub API wrapper
+│   │   └── types.ts            # TypeScript types
+│   └── components/             # Reusable components
+├── .env.example
+├── PRD.md
+└── README.md
+```
+
+---
+
+## Priority Order
+
+### Priority Zero: Shell-to-Shell Robustness
+1. Bulletproof WebRTC reconnection (auto-retry on ICE disconnect, network change, sleep/wake)
+2. Chunked transfer with resume (track offset, resume from last acknowledged chunk)
+3. Encryption verification badge (after DTLS handshake)
+4. NAT traversal (STUN/TURN)
+5. Large-file handling (2GB+ support, no memory blowup)
+6. Fail gracefully with auto-reconnect
+
+### Priority 1: Human Scaffolding (Minimal)
+1. Copy-to-clipboard (tiny button)
+2. QR code for phone transfers
+3. File previews: Only sender's drop zone
+4. Receiver minimal UI: "Incoming from claw @ [code] – [size]"
+5. Simple progress: "Claw gripping... 45% (8.2 MB/s)"
+6. Ugly-truth rate limiting
+
+### Kill or Defer
+- Auth / GitHub login (kills zero-friction)
+- Full transfer dashboard
+- Confetti, success fireworks
+- Fancy settings
+
+---
+
+## Non-Negotiables (Test These)
+
+1. Phone on cellular → laptop on WiFi, drop 1GB file
+2. Close/reopen tab mid-transfer
+3. Airplane mode toggle → must recover
+4. Time-to-first-byte after code entry
+5. Transfer time vs direct USB benchmark
+6. Lighthouse perf > 95
+
+**After every change:** "Does this make shell-to-shell faster/more reliable? Or just prettier for humans?"
+
+---
 
 ## Ralph Wiggum Loop
 
-The Ralph Wiggum loop is an iterative development process:
+Iterate until:
+1. [ ] WebRTC auto-reconnect works (network toggle, tab background)
+2. [ ] Chunked transfer with resume (mid-transfer disconnect → resume)
+3. [ ] Large file support (2GB+ no memory blowup)
+4. [ ] Minimal human UI (no bloat)
+5. [ ] Transfer completes phone ↔ laptop
 
-1. **Read** current state (git status, files)
-2. **Plan** 1-3 concrete next steps
-3. **Write** code changes
-4. **Test** locally if possible
-5. **Commit** with descriptive message
-6. **Repeat** until completion criteria met
-
-### Completion Criteria
-- [ ] Web UI loads and displays upload page
-- [ ] File uploads successfully to Gist
-- [ ] Share link generates correctly
-- [ ] Transfer status displays correctly
-- [ ] Error handling works
-- [ ] Claude Code can run end-to-end test
+---
 
 ## Commands
 
@@ -148,20 +194,18 @@ npm run build
 
 # Start production server
 npm start
-
-# Lint code
-npm run lint
 ```
 
 ## Environment Variables
 
 Required in `.env.local`:
 - `GITHUB_TOKEN` - GitHub personal access token (scopes: gist)
-- Optional: OAuth credentials for future user accounts
+
+---
 
 ## Notes
 
-- This is an MVP - P2P transfer is simulated with base64 encoding
-- Real WebRTC would enable true browser-to-browser transfer
-- GitHub only sees metadata, not file content
-- Free tier: 100MB files, 10 transfers/day
+- This is crabs-first, humans-second
+- The UI is scaffolding, not the star
+- Speed + reliability > pretty
+- No servers touch the payload
